@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, List
 
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
-
+from src.config import CLASS_NAMES_MAP, get_class_name
 from src.agent_core.llm_orchestrator import Orchestrator
 from src.agent_core.experience_memory import ExperienceMemory
 from src.execution.budget_manager import BudgetManager
@@ -20,7 +20,7 @@ from src.model_layer.model_factory import get_base_model
 from src.model_layer.tuners import apply_tuning_strategy
 from src.data_layer.dataset_loader import MedicalTextDataset, validate_dataset
 from src.utils.reproducibility import set_seed
-
+from src.config import get_hf_model_name
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
@@ -29,32 +29,6 @@ import torch.nn.functional as F
 
 
 # Disease class names mapping for Symptom2Disease dataset
-CLASS_NAMES_MAP = {
-    0: "Psoriasis",
-    1: "Varicose Veins",
-    2: "Typhoid",
-    3: "Chicken pox",
-    4: "Impetigo",
-    5: "Dengue",
-    6: "Fungal infection",
-    7: "Common Cold",
-    8: "Pneumonia",
-    9: "Dimorphic Hemorrhoids",
-    10: "Arthritis",
-    11: "Acne",
-    12: "Bronchial Asthma",
-    13: "Hypertension",
-    14: "Migraine",
-    15: "Cervical spondylosis",
-    16: "Jaundice",
-    17: "Malaria",
-    18: "urinary tract infection",
-    19: "allergy",
-    20: "gastroesophageal reflux disease",
-    21: "drug reaction",
-    22: "peptic ulcer disease",
-    23: "diabetes"
-}
 
 
 def setup_mlflow(experiment_name: str = "Clinical-LLMOps"):
@@ -276,12 +250,8 @@ def run_automl_pipeline(
                     "reasoning": reasoning
                 })
             
-            model_mapping = {
-                "bert": "bert-base-uncased",
-                "biobert": "dmis-lab/biobert-v1.1",
-                "roberta": "roberta-base"
-            }
-            hf_name = model_mapping.get(plan["model_name"], plan["model_name"])
+            
+            hf_name = get_hf_model_name(plan["model_name"])
             
             print(f"[Pipeline] Loading tokenizer: {hf_name}")
             tokenizer = AutoTokenizer.from_pretrained(hf_name)
@@ -537,8 +507,7 @@ def predict_pipeline(
         
         predicted_class = pred_idx.item()
         confidence = conf.item()
-        predicted_class_name = CLASS_NAMES_MAP.get(predicted_class, f"Unknown-{predicted_class}")
-        
+        predicted_class_name = get_class_name(predicted_class)
         entropy = -torch.sum(probs * torch.log(probs + 1e-9)).item()
         uncertainty_msg = Evaluator.get_uncertainty_statement(entropy)
         

@@ -1,0 +1,25 @@
+# MLflow
+mlruns/
+mlflow.db
+
+# مدل‌های آموزش‌دیده (حجمشون زیاده)
+experiments/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Kaggle
+/kaggle/
+
+# محیط مجازی
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/

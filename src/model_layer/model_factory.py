@@ -1,15 +1,11 @@
 import torch
 from transformers import AutoModelForSequenceClassification, AutoConfig
-
+from src.config import get_hf_model_name
 def get_base_model(model_name, num_classes=5, pretrained=True):
     
-    model_mapping = {
-        'bert': 'bert-base-uncased',
-        'biobert': 'dmis-lab/biobert-v1.1',
-        'roberta': 'roberta-base'
-    }
     
-    hf_model_name = model_mapping.get(model_name, model_name)
+    
+    hf_model_name = get_hf_model_name(model_name)
     
     if pretrained:
         model = AutoModelForSequenceClassification.from_pretrained(

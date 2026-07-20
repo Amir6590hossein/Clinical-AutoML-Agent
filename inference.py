@@ -105,14 +105,14 @@ def display_prediction_result(result):
         print("-" * 70)
         
         # Map class indices to names
-        from src.execution.pipeline_services import CLASS_NAMES_MAP
+        from src.config import get_class_name
         
         class_probs = result['class_probabilities']
         indexed_probs = [(i, prob) for i, prob in enumerate(class_probs)]
         sorted_probs = sorted(indexed_probs, key=lambda x: x[1], reverse=True)[:5]
         
         for class_idx, prob in sorted_probs:
-            class_name = CLASS_NAMES_MAP.get(class_idx, f"Class {class_idx}")
+            class_name = get_class_name(class_idx)
             bar_len = int(prob * 50)
             bar = "#" * bar_len + "-" * (50 - bar_len)
             print(f"  {class_name.ljust(35)} {bar} ({prob:.2%})")
