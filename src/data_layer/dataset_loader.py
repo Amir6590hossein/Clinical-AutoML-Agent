@@ -90,12 +90,13 @@ def get_tokenizer(model_name: str):
     except Exception as e:
         raise ValueError(f"Could not load tokenizer for {model_name}: {e}")
 
-
 def validate_dataset(df: pd.DataFrame) -> List[str]:
-    # Validate dataset quality before training.
-    # Returns a list of issues found (empty list means valid dataset).
+    """Validate dataset quality before training.
+    Returns a list of issues found (empty list means valid dataset)."""
+    
     issues = []
     
+    # Check required columns
     if 'text' not in df.columns:
         issues.append("CRITICAL: Missing 'text' column")
     if 'label' not in df.columns:
@@ -104,6 +105,7 @@ def validate_dataset(df: pd.DataFrame) -> List[str]:
     if issues:
         return issues
     
+    # Check null values
     null_texts = df['text'].isnull().sum()
     if null_texts > 0:
         issues.append(f"WARNING: Found {null_texts} null texts")
@@ -112,38 +114,44 @@ def validate_dataset(df: pd.DataFrame) -> List[str]:
     if null_labels > 0:
         issues.append(f"WARNING: Found {null_labels} null labels")
     
+    # Check text lengths
     text_lengths = df['text'].astype(str).str.len()
     very_short = (text_lengths < 5).sum()
     if very_short > 0:
         issues.append(f"WARNING: Found {very_short} very short texts (length < 5)")
     
+    # Check class distribution
     unique_labels = df['label'].dropna().unique()
     n_classes = len(unique_labels)
+    
+    print(f"[Validation] Dataset: {len(df)} samples, {n_classes} classes")
+    
     if n_classes < 2:
         issues.append("CRITICAL: Dataset must have at least 2 classes")
+        return issues
     elif n_classes > 20:
         issues.append(f"WARNING: Large number of classes: {n_classes}")
     
-    if n_classes >= 2:
-        label_counts = df['label'].value_counts()
-        min_samples = label_counts.min()
-        max_samples = label_counts.max()
-        
-        if min_samples < 3:
-            issues.append(f"CRITICAL: Some classes have fewer than 3 samples (min: {min_samples})")
-        
-        imbalance_ratio = max_samples / min_samples if min_samples > 0 else float('inf')
-        if imbalance_ratio > 10:
-            issues.append(f"WARNING: High class imbalance (ratio: {imbalance_ratio:.2f})")
+    label_counts = df['label'].value_counts()
+    print(f"[Validation] Class distribution: {dict(label_counts)}")
     
+    min_samples = label_counts.min()
+    max_samples = label_counts.max()
+    
+    if min_samples < 3:
+        issues.append(f"CRITICAL: Some classes have fewer than 3 samples (min: {min_samples})")
+    
+    imbalance_ratio = max_samples / min_samples if min_samples > 0 else float('inf')
+    if imbalance_ratio > 10:
+        issues.append(f"WARNING: High class imbalance (ratio: {imbalance_ratio:.2f})")
+    
+    # Check label format
     if not pd.api.types.is_numeric_dtype(df['label'].dropna()):
         issues.append("WARNING: Label column is not numeric, attempting conversion")
     
+    # Check duplicates
     duplicate_texts = df['text'].duplicated().sum()
     if duplicate_texts > 0:
         issues.append(f"WARNING: Found {duplicate_texts} duplicate texts")
-    
-    print(f"[Validation] Dataset: {len(df)} samples, {n_classes} classes")
-    print(f"[Validation] Class distribution: {dict(label_counts)}")
     
     return issues

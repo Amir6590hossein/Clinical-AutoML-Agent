@@ -3,9 +3,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src.data_layer.dataset_loader import validate_dataset
 
 def test_healthy_data():
-    df = pd.DataFrame({'text': ['a','b','c','d','e'], 'label': [0,1,0,1,0]})
+    df = pd.DataFrame({'text': ['a','b','c','d','e','f'], 'label': [0,0,0,1,1,1]})
     assert not any("CRITICAL" in i for i in validate_dataset(df))
-
 def test_missing_columns():
     assert any("CRITICAL" in i for i in validate_dataset(pd.DataFrame({'x':[1]})))
     assert any("CRITICAL" in i for i in validate_dataset(pd.DataFrame({'text':['a']})))
